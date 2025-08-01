@@ -1,20 +1,19 @@
-import os
-from torchvision import transforms
-from torch.utils.data import Dataset
-from PIL import Image
+import torchvision.transforms as transforms
+from torchvision.datasets import ImageFolder
+from torch.utils.data import DataLoader
+from config import train_dir, test_dir, batch_size, image_size
 
-class MedicalImageDataset(Dataset):
-    def __init__(self, image_paths, labels, transform=None):
-        self.image_paths = image_paths
-        self.labels = labels
-        self.transform = transform or transforms.ToTensor()
+def get_dataloaders(train_path=train_dir, test_path=test_dir, batch_size=batch_size):
+    transform = transforms.Compose([
+        transforms.Resize(image_size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5], std=[0.5])
+    ])
 
-    def __len__(self):
-        return len(self.image_paths)
+    train_dataset = ImageFolder(root=train_path, transform=transform)
+    test_dataset = ImageFolder(root=test_path, transform=transform)
 
-    def __getitem__(self, idx):
-        img = Image.open(self.image_paths[idx]).convert("RGB")
-        label = self.labels[idx]
-        if self.transform:
-            img = self.transform(img)
-        return img, label
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    return train_loader, test_loader, train_dataset.classes
